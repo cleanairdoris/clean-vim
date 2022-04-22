@@ -21,6 +21,7 @@ set incsearch
 " 关闭兼容模式
 set nocompatible
 
+set nobackup "关闭备份模式
 set mouse=a
 
 " 基于缩进或语法进行代码折叠
@@ -45,9 +46,6 @@ call plug#begin()
 Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
 "优化nerdtree
 Plug 'jistr/vim-nerdtree-tabs'
-Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
-Plug 'ycm-core/YouCompleteMe'
-Plug 'ludovicchabant/vim-gutentags'     "自动生成tag
 
 Plug 'mhinz/vim-signify'
 Plug 'w0rp/ale'
@@ -56,16 +54,18 @@ Plug 'airblade/vim-gitgutter'
 
 Plug 'skywind3000/asyncrun.vim'
 
-"go语言相关
-" 查看当前代码文件中的变量和函数列表的插件，
-" 可以切换和跳转到代码中对应的变量和函数的位置
-" 大纲式导航, Go 需要 https://github.com/jstemmer/gotags 支持
-Plug 'majutsushi/tagbar'
-" go 主要插件
-Plug 'fatih/vim-go', { 'tag': '*' }
-" go 中的代码追踪，输入 gd 就可以自动跳转
+"搜索工具
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
+
+"补全工具
+Plug 'neoclide/coc.nvim' , {'do': 'yarn install --frozen-lockfile'}
+
+Plug 'fatih/vim-go'
 Plug 'dgryski/vim-godef'
 
+Plug 'majutsushi/tagbar'
+"
 "美化UI
 Plug 'sickill/vim-monokai'               " monokai主题
 Plug 'vim-airline/vim-airline'           " 美化状态栏
@@ -108,67 +108,8 @@ let g:nerdtree_tabs_open_on_console_startup=1
 " Asyncrun
 let g:asyncrun_open = 8
 
-"""""""""""""""""""""""""""""""" YCM配置
-" 全局YCM配置文件路径
-let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
-let g:ycm_confirm_extra_conf = 0  " 不提示是否载入本地ycm_extra_conf文件
-let g:ycm_min_num_of_chars_for_completion = 2  " 输入第2个字符就罗列匹配项
-" Ctrl+J跳转至定义、声明或文件
-nnoremap <c-j> :YcmCompleter GoToDefinitionElseDeclaration<CR>|
-" 语法关键字、注释、字符串补全
-let g:ycm_seed_identifiers_with_syntax = 1
-let g:ycm_complete_in_comments = 1
-let g:ycm_complete_in_strings = 1
-" 从注释、字符串、tag文件中收集用于补全信息
-let g:ycm_collect_identifiers_from_comments_and_strings = 1
-let g:ycm_collect_identifiers_from_tags_files = 1
-" 禁止快捷键触发补全
-let g:ycm_key_invoke_completion = '<c-z>'  " 主动补全(默认<c-space>)
-noremap <c-z> <NOP>
-" 输入2个字符就触发补全
-let g:ycm_semantic_triggers = {
-            \ 'c,cpp,python,java,go,erlang,perl': ['re!\w{2}'],
-            \ 'cs,lua,javascript': ['re!\w{2}'],
-            \ }
-let g:ycm_show_diagnostics_ui=0  " 禁用YCM自带语法检查(使用ale)
-set completeopt-=preview
-let g:ycm_add_preview_to_completeopt=0   " 禁用YCM 函数原型预览
-" 防止YCM和Ultisnips的TAB键冲突，禁止YCM的TAB
-let g:ycm_key_list_select_completion = ['<C-n>', '<Down>']
-let g:ycm_key_list_previous_completion = ['<C-p>', '<Up>']
-
-let g:ycm_filetype_whitelist = {
-            \ "c":1,
-            \ "cpp":1,
-            \ "go":1,
-            \ "python":1,
-            \ "sh":1,
-            \ "zsh":1,
-            \ }
-
 """""""""""""""""""""""echodoc
 let g:echodoc#type = "echo" " Default value
-
-
-"""""""""""""""""""""""""""""gutentags配置
-" gutentags搜索工程目录的标志，碰到这些文件/目录名就停止向上一级目录递归 "
-let g:gutentags_project_root = ['.root', '.svn', '.git', '.project', '.vscode', '.idea']
-
-" 所生成的数据文件的名称 "
-let g:gutentags_ctags_tagfile = '.tags'
-
-" 将自动生成的 tags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录 "
-let s:vim_tags = expand('~/.cache/tags')
-let g:gutentags_cache_dir = s:vim_tags
-" 检测 ~/.cache/tags 不存在就新建 "
-if !isdirectory(s:vim_tags)
-   silent! call mkdir(s:vim_tags, 'p')
-endif
-
-"""""""""""""""""""""""""""""""" 配置 ctags 的参数 "
-let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
-let g:gutentags_ctags_extra_args += ['--c++-kinds=+pxI']
-let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 
 """""""""""""""""""""""""""""""" ale
 let g:ale_linters = {
@@ -229,6 +170,7 @@ let g:tagbar_type_go = {
     \ 'ctagsargs' : '-sort -silent'
 \ }
 
+
 "==============================================================================
 " vim-go 插件
 "==============================================================================
@@ -247,6 +189,137 @@ let g:go_highlight_methods = 1
 let g:go_highlight_generate_tags = 1
 
 let g:godef_split=2
+
+"-------------coc.nvim推荐的配置--------------------
+" TextEdit might fail if hidden is not set.
+set hidden
+
+" Some servers have issues with backup files, see #649.
+set nowritebackup
+
+" Give more space for displaying messages.
+set cmdheight=2
+
+" Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
+
+"在输入一部分字符的情况下，用tab来自动补全
+" Use tab for trigger completion with characters ahead and navigate.
+" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config.
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+" 用Ctrl @来主动触发自动补全
+inoremap <silent><expr> <c-@> coc#refresh()
+
+" 回车时，选择自动补全窗口的第一项
+" Make <CR> auto-select the first completion item and notify coc.nvim to
+" format on enter, <cr> could be remapped by other vim plugin
+inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" Use `[g` and `]g` to navigate diagnostics
+" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
+nmap <silent> sn <Plug>(coc-diagnostic-prev)
+nmap <silent> sp <Plug>(coc-diagnostic-next)
+
+" 几个非常重要的定义跳转键,gd, gr
+" GoTo code navigation.
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+" K用于显示文档
+nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  elseif (coc#rpc#ready())
+    call CocActionAsync('doHover')
+  else
+    execute '!' . &keywordprg . " " . expand('<cword>')
+  endif
+endfunction
+
+" Highlight the symbol and its references when holding the cursor.
+" autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" rn键用于重命名
+nmap <leader>rn <Plug>(coc-rename)
+
+" leader f，默认就是\f，格式化代码
+" Formatting selected code.
+xmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f  <Plug>(coc-format-selected)
+
+augroup mygroup
+  autocmd!
+  " Setup formatexpr specified filetype(s).
+  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
+  " Update signature help on jump placeholder.
+  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+augroup end
+
+" 修正代码的快捷键，如自动引入
+" Applying codeAction to the selected region.
+" Example: `<leader>aap` for current paragraph
+xmap <leader>a  <Plug>(coc-codeaction-selected)
+nmap <leader>a  <Plug>(coc-codeaction-selected)
+
+" Remap keys for applying codeAction to the current buffer.
+nmap <leader>ac  <Plug>(coc-codeaction)
+" Apply AutoFix to problem on the current line.
+nmap <leader>qf  <Plug>(coc-fix-current)
+
+" Map function and class text objects
+" NOTE: Requires 'textDocument.documentSymbol' support from the language server.
+xmap if <Plug>(coc-funcobj-i)
+omap if <Plug>(coc-funcobj-i)
+xmap af <Plug>(coc-funcobj-a)
+omap af <Plug>(coc-funcobj-a)
+xmap ic <Plug>(coc-classobj-i)
+omap ic <Plug>(coc-classobj-i)
+xmap ac <Plug>(coc-classobj-a)
+omap ac <Plug>(coc-classobj-a)
+
+" Requires 'textDocument/selectionRange' support of language server.
+nmap <silent> <C-s> <Plug>(coc-range-select)
+xmap <silent> <C-s> <Plug>(coc-range-select)
+
+" Add `:Format` command to format current buffer.
+command! -nargs=0 Format :call CocAction('format')
+
+" Add `:Fold` command to fold current buffer.
+command! -nargs=? Fold :call     CocAction('fold', <f-args>)
+
+" Add `:OR` command for organize imports of the current buffer.
+command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
+
+" Mappings for CoCList
+" Show all diagnostics.
+nnoremap <silent><nowait> <space>a  :<C-u>CocList diagnostics<cr>
+"-------------coc.nvim推荐的配置结束----------------
+
 
 """""""""""""""""""""""美化插件""""""""""""""""""""""""
 "" airline
